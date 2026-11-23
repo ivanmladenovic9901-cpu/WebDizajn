@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test znanja: Web dizajn i HTML</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter i JetBrains Mono za HTML kod -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Prilagođeni stil za prikaz HTML tagova unutar teksta pitanja i odgovora */
+        .html-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.375rem;
+            border: 1px solid #cbd5e1;
+            display: inline-block;
+            word-break: break-word;
+        }
+        /* Animacija za kritično vreme (ispod 1 minuta) */
+        @keyframes pulse-urgent {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        .timer-urgent {
+            animation: pulse-urgent 1s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- ===================================================================== -->
+    <!-- ZAGLAVLJE APLIKACIJE (Prikazuje se na početnom i završnom ekranu)     -->
+    <!-- ===================================================================== -->
+    <header id="main-header" class="bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+                    <!-- Ikona koda -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Web dizajn & HTML</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 font-medium">Elektronska provera znanja</p>
+                </div>
+            </div>
+            <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                Baza: 41 pitanje • Test: 15 pitanja
+            </span>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- STICKY NAVIGACIJA TOKOM RADA NA TESTU (Tajmer, Napredak, Završi)      -->
+    <!-- ===================================================================== -->
+    <div id="quiz-sticky-bar" class="hidden sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <!-- Tajmer -->
+                <div id="timer-box" class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 transition-colors">
+                    <svg id="timer-icon" class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 block leading-none">Preostalo vreme</span>
+                        <span id="timer-display" class="font-mono text-lg sm:text-xl font-bold text-slate-900 leading-tight">09:00</span>
+                    </div>
+                </div>
+
+                <!-- Brojač odgovorenih pitanja -->
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 block leading-none">Odgovoreno</span>
+                        <span class="text-base sm:text-lg font-bold text-indigo-600"><span id="answered-count">0</span> / 15</span>
+                    </div>
+                    <!-- Dugme za završetak testa -->
+                    <button id="btn-finish-quiz" type="button" class="px-4 sm:px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-sm sm:text-base shadow-sm shadow-emerald-200 transition-all flex items-center gap-2 cursor-pointer">
+                        <span>Završi test</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Brza navigaciona traka brojeva pitanja (1 - 15) -->
+            <div id="question-nav-pills" class="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1">
+                <!-- Dinamički generisani dugmići 1..15 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- GLAVNI SADRŽAJ                                                        -->
+    <!-- ===================================================================== -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+        <!-- 1. POČETNI EKRAN (Start Screen) -->
+        <section id="start-screen" class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-700 px-6 sm:px-8 py-8 text-white">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold mb-3 backdrop-blur-sm">
+                        <span>Kontrolna vežba • Web dizajn</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Test znanja: Web dizajn i HTML</h2>
+                    <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                        Proverite svoje poznavanje osnova HTML jezika, tagova, atributa i internet tehnologija.
+                    </p>
+                </div>
+
+                <div class="p-6 sm:p-8 space-y-6">
+                    <!-- Pravila testa u 3 kartice -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Broj pitanja</p>
+                                <p class="text-sm font-bold text-slate-800">15 nasumičnih</p>
+                                <p class="text-xs text-slate-500">od ukupno 41 u bazi</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Vreme rada</p>
+                                <p class="text-sm font-bold text-slate-800">9 minuta</p>
+                                <p class="text-xs text-slate-500">automatski završetak</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Bodovanje</p>
+                                <p class="text-sm font-bold text-slate-800">15 poena maks.</p>
+                                <p class="text-xs text-slate-500">1 poen po pitanju</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Napomena o mešanju odgovora -->
+                    <div class="p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-sm text-indigo-900 flex items-start gap-3">
+                        <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>
+                            Pri svakom pokretanju testa bira se novih 15 pitanja, a ponuđeni odgovori pod <strong>a)</strong>, <strong>b)</strong>, <strong>c)</strong> i <strong>d)</strong> se nasumično raspoređuju. Po završetku testa dobijate pregled svih tačnih odgovora i detaljnu listu eventualnih grešaka.
+                        </p>
+                    </div>
+
+                    <!-- Opcioni podaci o učeniku -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                        <div class="sm:col-span-2">
+                            <label for="student-name" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Ime i prezime učenika <span class="text-slate-400 font-normal">(opciono)</span>
+                            </label>
+                            <input type="text" id="student-name" placeholder="Unesite ime i prezime..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label for="student-class" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Odeljenje <span class="text-slate-400 font-normal">(opciono)</span>
+                            </label>
+                            <input type="text" id="student-class" placeholder="npr. II2" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-slate-800 bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Dugme za početak -->
+                    <div class="pt-2">
+                        <button id="btn-start-quiz" type="button" class="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base sm:text-lg shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <span>Započni test</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. EKRAN ZA RAD NA TESTU (Quiz Screen) -->
+        <section id="quiz-screen" class="hidden space-y-6">
+            <div id="questions-container" class="space-y-6">
+                <!-- Ovde se dinamički ubacuje 15 kartica sa pitanjima -->
+            </div>
+
+            <!-- Donje dugme za završetak testa -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-center sm:text-left">
+                    <p class="font-bold text-slate-800">Stigli ste do kraja testa</p>
+                    <p class="text-sm text-slate-500">Proverite da li ste odgovorili na sva pitanja pre predaje.</p>
+                </div>
+                <button id="btn-finish-quiz-bottom" type="button" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Predaj i završi test</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. EKRAN SA REZULTATIMA (Results Screen) -->
+        <section id="results-screen" class="hidden space-y-8">
+            <!-- Kartica sa ukupnim rezultatom -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div id="result-banner" class="bg-gradient-to-r from-indigo-600 to-blue-700 px-6 sm:px-8 py-6 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span id="time-expired-badge" class="hidden inline-block px-2.5 py-0.5 rounded-md bg-rose-500 text-white text-xs font-bold uppercase tracking-wider mb-2">
+                            Vreme je isteklo
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold">Rezultati testa</h2>
+                        <p id="student-info-display" class="text-indigo-100 text-sm sm:text-base mt-1">Učenik: Gost • Utrošeno vreme: 00:00</p>
+                    </div>
+                    <button id="btn-restart-quiz" type="button" class="px-5 py-3 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Pokreni novi test (nova kombinacija)</span>
+                    </button>
+                </div>
+
+                <!-- Statistika: Poeni, Procenat uspešnosti, Greške -->
+                <div class="p-6 sm:p-8">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <!-- Tačni odgovori (Poeni) -->
+                        <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Tačni odgovori (Poeni)</span>
+                            <div class="mt-2 flex items-baseline gap-2">
+                                <span id="res-correct-count" class="text-3xl sm:text-4xl font-extrabold text-emerald-700">0</span>
+                                <span class="text-lg font-bold text-emerald-600">/ 15</span>
+                            </div>
+                        </div>
+
+                        <!-- Procenat uspešnosti -->
+                        <div class="p-5 rounded-2xl bg-indigo-50 border border-indigo-200">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-700">Procenat uspešnosti</span>
+                            <div class="mt-2 flex items-baseline gap-1">
+                                <span id="res-percentage" class="text-3xl sm:text-4xl font-extrabold text-indigo-700">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Greške (netačni + neodgovoreni) -->
+                        <div class="p-5 rounded-2xl bg-rose-50 border border-rose-200">
+                            <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Ukupno grešaka</span>
+                            <div class="mt-2 flex items-baseline gap-2">
+                                <span id="res-wrong-count" class="text-3xl sm:text-4xl font-extrabold text-rose-700">0</span>
+                                <span id="res-unanswered-note" class="text-xs font-semibold text-rose-600"></span>
+                            </div>
+                        </div>
+
+                        <!-- Predlog ocene / Uspeh -->
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Ocena / Ishod</span>
+                            <div class="mt-2">
+                                <span id="res-grade" class="text-xl sm:text-2xl font-extrabold text-slate-800 block leading-tight">-</span>
+                                <span id="res-grade-desc" class="text-xs text-slate-500 font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vizuelni progress bar uspešnosti -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold text-slate-600">
+                            <span>Uspešnost na testu</span>
+                            <span id="res-progress-label">0%</span>
+                        </div>
+                        <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                            <div id="res-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-700" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZADRŽANI ODGOVORI: Pregled grešaka i tačnih odgovora -->
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-bold text-slate-900">Pregled pitanja i odgovora</h3>
+                        <p class="text-sm text-slate-500">Zadržani su svi vaši odgovori, obeležene greške i tačna rešenja.</p>
+                    </div>
+
+                    <!-- Filter dugmad -->
+                    <div class="flex flex-wrap gap-2" role="group" aria-label="Filter rezultata">
+                        <button type="button" data-filter="all" class="filter-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer">
+                            Sva pitanja (<span id="count-all">15</span>)
+                        </button>
+                        <button type="button" data-filter="wrong" class="filter-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-all cursor-pointer">
+                            Samo greške (<span id="count-wrong">0</span>)
+                        </button>
+                        <button type="button" data-filter="correct" class="filter-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all cursor-pointer">
+                            Samo tačni (<span id="count-correct">0</span>)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista kartica sa detaljnim pregledom svakog pitanja -->
+                <div id="review-container" class="space-y-4">
+                    <!-- Dinamički generisane kartice -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- PRILAGOĐENI MODAL ZA POTVRDU (Umesto zabranjenog confirm/alert)       -->
+    <!-- ===================================================================== -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 transform transition-all">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Neodgovorena pitanja</h3>
+            </div>
+            <p id="confirm-modal-text" class="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
+                Niste odgovorili na sva pitanja. Da li ste sigurni da želite da završite test?
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button id="btn-modal-cancel" type="button" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors cursor-pointer">
+                    Vrati se na test
+                </button>
+                <button id="btn-modal-confirm" type="button" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition-colors cursor-pointer">
+                    Da, završi test
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Podnožje -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center text-xs text-slate-400">
+            Web dizajn i HTML • Interaktivni test znanja (15 nasumičnih pitanja • 9 minuta)
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT LOGIKA APLIKACIJE                                          -->
+    <!-- ===================================================================== -->
+    <script>
+        /**
+         * KOMPLETNA BAZA OD 41 JEDINSTVENOG PITANJA (spojena oba dokumenta bez duplikata)
+         * Napomena: Svi HTML tagovi u pitanjima i opcijama su enkodovani (&lt; i &gt;)
+         * i obavijeni <span class="html-tag">...</span> radi jasnog prikaza koda.
+         * Tačan odgovor nikada nije najduža opcija u skupu od 4 ponuđena odgovora.
+         */
+        const QUESTION_BANK = [
+            {
+                id: 1,
+                question: 'U HTML iskazu <span class="html-tag">&lt;h1 align="right"&gt;Naslov&lt;/h1&gt;</span>, član <span class="html-tag">align</span> je:',
+                correct: 'atribut',
+                distractors: [
+                    'karakter-referenca',
+                    'startni HTML tag',
+                    'završni HTML tag'
+                ]
+            },
+            {
+                id: 2,
+                question: 'Šta je web server?',
+                correct: 'Računar i softver za objavu sajta',
+                distractors: [
+                    'Skup svih povezanih hipertekst stranica',
+                    'Kolekcija svih dostupnih URL adresa',
+                    'Program za uređivanje izvornog HTML koda'
+                ]
+            },
+            {
+                id: 3,
+                question: 'Gde se upisuje tekst koji se prikazuje u slučaju nemogućnosti da se prikaže slika?',
+                correct: 'U okviru alt atributa',
+                distractors: [
+                    'U okviru samog otvarajućeg taga',
+                    'U okviru src atributa slike',
+                    'U okviru posebnog title taga'
+                ]
+            },
+            {
+                id: 4,
+                question: 'Koji od ponuđenih atributa se mogu upotrebiti u okviru <span class="html-tag">&lt;font&gt;</span> taga?',
+                correct: 'Sva tri nabrojana',
+                distractors: [
+                    'Samo atribut face za izbor fonta',
+                    'Samo atribut color za boju slova',
+                    'Samo atribut size za veličinu slova'
+                ]
+            },
+            {
+                id: 5,
+                question: 'Izabrati ispravno ispisan HTML tag za podebljani tekst:',
+                correct: '<span class="html-tag">&lt;b&gt;Tamniji dio&lt;/b&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;/b&gt;Tamniji dio&lt;/b&gt;</span>',
+                    '<span class="html-tag">&lt;strong&gt;Tamniji dio&lt;strong&gt;</span>',
+                    '<span class="html-tag">&lt;/strong&gt;Tamniji dio&lt;/strong&gt;</span>'
+                ]
+            },
+            {
+                id: 6,
+                question: 'Koji tag predstavlja naslov najvišeg nivoa (najveći tekst na web strani)?',
+                correct: '<span class="html-tag">&lt;h1&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;head&gt;</span>',
+                    '<span class="html-tag">&lt;h6&gt;</span>',
+                    '<span class="html-tag">&lt;caption&gt;</span>'
+                ]
+            },
+            {
+                id: 7,
+                question: 'Koji od ovih atributa su svi za slike (<span class="html-tag">&lt;img&gt;</span>)?',
+                correct: '<span class="html-tag">src, width, height</span>',
+                distractors: [
+                    '<span class="html-tag">picture, height, border</span>',
+                    '<span class="html-tag">image, width, height</span>',
+                    '<span class="html-tag">image, border, size</span>'
+                ]
+            },
+            {
+                id: 8,
+                question: 'Koji je tačan HTML iskaz za kreiranje hiperlinka?',
+                correct: '<span class="html-tag">&lt;a href="http://www.apple.com"&gt;Apple&lt;/a&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;a url="http://www.apple.com"&gt;Apple&lt;/a&gt;</span>',
+                    '<span class="html-tag">&lt;a name="http://www.apple.com"&gt;Apple&lt;/a&gt;</span>',
+                    '<span class="html-tag">&lt;a&gt;http://www.apple.com&lt;/a&gt;</span>'
+                ]
+            },
+            {
+                id: 9,
+                question: 'Koji od ponuđenih tagova za unos slike je ispravno napisan?',
+                correct: '<span class="html-tag">&lt;img src="image.gif"/&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;img href="image.gif"/&gt;</span>',
+                    '<span class="html-tag">&lt;img alt="image.gif"/&gt;</span>',
+                    '<span class="html-tag">&lt;img&gt;src="image.gif"&lt;/img&gt;</span>'
+                ]
+            },
+            {
+                id: 10,
+                question: 'Koju ulogu u tagu <span class="html-tag">&lt;img src="Auto.jpg" alt="auto"/&gt;</span> ima <span class="html-tag">alt</span> atribut?',
+                correct: 'Prikazuje zamenski tekst za sliku',
+                distractors: [
+                    'Definiše tačnu putanju do slike na serveru',
+                    'Određuje širinu i visinu slike u pikselima',
+                    'Otvara sliku u novom prozoru pregledača'
+                ]
+            },
+            {
+                id: 11,
+                question: 'Koji od ovih atributa se mogu upotrebiti u okviru taga za hiperlink <span class="html-tag">&lt;a&gt;</span>?',
+                correct: '<span class="html-tag">href, title, target</span>',
+                distractors: [
+                    '<span class="html-tag">width, height, href, alt</span>',
+                    '<span class="html-tag">src, alt, size, title</span>',
+                    '<span class="html-tag">title, src, alt, color</span>'
+                ]
+            },
+            {
+                id: 12,
+                question: 'Šta je web provajder (ISP)?',
+                correct: 'Firma koja pruža internet usluge',
+                distractors: [
+                    'Server na kom je trajno publikovan sajt',
+                    'Mesto preko kog direktno komuniciraju serveri',
+                    'Korelacija svih povezanih hipertekst stranica'
+                ]
+            },
+            {
+                id: 13,
+                question: 'Koja je ispravna sintaksa deklaracije za HTML5?',
+                correct: '<span class="html-tag">&lt;!DOCTYPE html&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;doctype html!&gt;</span>',
+                    '<span class="html-tag">&lt;/doctype html&gt;</span>',
+                    '<span class="html-tag">&lt;html doctype="5"&gt;</span>'
+                ]
+            },
+            {
+                id: 14,
+                question: 'Koja su tri osnovna načina za linkovanje (povezivanje) u HTML-u?',
+                correct: 'Unutrašnje, spoljašnje i e-mail',
+                distractors: [
+                    'Lokalno, serversko i mrežno povezivanje',
+                    'Direktno, indirektno i dinamičko linkovanje',
+                    'Tekstualno, slikovno i multimedijalno linkovanje'
+                ]
+            },
+            {
+                id: 15,
+                question: 'Koji od ponuđenih tagova je ispravno napisan zatvarajući tag?',
+                correct: '<span class="html-tag">&lt;/font&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;font all&gt;</span>',
+                    '<span class="html-tag">&lt;/font size="4"&gt;</span>',
+                    '<span class="html-tag">&lt;/font size&gt;</span>'
+                ]
+            },
+            {
+                id: 16,
+                question: 'Među ponuđenim HTML tagovima nalazi se „uljez“ (nepostojeći tag). Koji?',
+                correct: '<span class="html-tag">&lt;h8&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;h1&gt;</span>',
+                    '<span class="html-tag">&lt;br&gt;</span>',
+                    '<span class="html-tag">&lt;p&gt;</span>'
+                ]
+            },
+            {
+                id: 17,
+                question: 'Šta tačno definiše pojam web sajta?',
+                correct: 'Skup povezanih web stranica',
+                distractors: [
+                    'Skup protokola za otpremanje i preuzimanje podataka',
+                    'Internet pregledač za čitanje hipertekst dokumenata',
+                    'Internet servis za razmenu dokumenata sa multimedijom'
+                ]
+            },
+            {
+                id: 18,
+                question: 'Koja je osnovna uloga Domain Name Server-a (DNS)?',
+                correct: 'Prevođenje domena u IP adresu',
+                distractors: [
+                    'Hostovanje i čuvanje fajlova web sajta',
+                    'Vršenje funkcije glavnog čvora u lokalnoj mreži',
+                    'Prikaz i izvršavanje dinamičkih web stranica'
+                ]
+            },
+            {
+                id: 19,
+                question: 'Koji je osnovni protokol koji koristi web server za prenos stranica?',
+                correct: 'HTTP',
+                distractors: [
+                    'SMTP',
+                    'HTML',
+                    'WWW'
+                ]
+            },
+            {
+                id: 20,
+                question: 'Šta će biti rezultat prikaza HTML koda: <span class="html-tag">&lt;b&gt;&lt;i&gt; Maturski ispit &lt;/i&gt;&lt;/b&gt;</span>?',
+                correct: 'Tekst podebljan i iskošen',
+                distractors: [
+                    'Tekst će na stranici biti prikazan samo podebljano',
+                    'Tekst će na stranici biti prikazan samo iskošeno',
+                    'Neće se primeniti nikakav efekat na zadati tekst'
+                ]
+            },
+            {
+                id: 21,
+                question: 'Koji je ispravan redosled tagova u osnovnoj strukturi HTML stranice?',
+                correct: '<span class="html-tag">&lt;html&gt; &lt;head&gt; &lt;/head&gt; &lt;body&gt; &lt;/body&gt; &lt;/html&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;head&gt; &lt;html&gt; &lt;/head&gt; &lt;body&gt; &lt;/body&gt; &lt;/html&gt;</span>',
+                    '<span class="html-tag">&lt;html&gt; &lt;body&gt; &lt;/body&gt; &lt;head&gt; &lt;/head&gt; &lt;/html&gt;</span>',
+                    '<span class="html-tag">&lt;html&gt; &lt;head&gt; &lt;body&gt; &lt;/head&gt; &lt;/body&gt; &lt;/html&gt;</span>'
+                ]
+            },
+            {
+                id: 22,
+                question: 'Koji par internet servisa i operacija je tačno povezan?',
+                correct: 'FTP – prenos datoteka sa servera',
+                distractors: [
+                    'Telnet – slanje i prijem elektronske pošte',
+                    'E-mail – prikaz i pregled HTML web stranica',
+                    'WWW – uspostavljanje veze sa udaljenim računarom'
+                ]
+            },
+            // --- NOVA PITANJA IZ DOKUMENTA HTML_Test_20_Pitanja.docx ---
+            {
+                id: 23,
+                question: 'Kojom HTML oznakom se semantički podebljava važan tekst?',
+                correct: '<span class="html-tag">&lt;strong&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;i&gt;</span>',
+                    '<span class="html-tag">&lt;u&gt;</span>',
+                    '<span class="html-tag">&lt;mark&gt;</span>'
+                ]
+            },
+            {
+                id: 24,
+                question: 'Koja oznaka se koristi za nenumersku (bulleted) listu?',
+                correct: '<span class="html-tag">&lt;ul&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;ol&gt;</span>',
+                    '<span class="html-tag">&lt;li&gt;</span>',
+                    '<span class="html-tag">&lt;list&gt;</span>'
+                ]
+            },
+            {
+                id: 25,
+                question: 'Koja oznaka označava standardnu ćeliju sa podacima u tabeli?',
+                correct: '<span class="html-tag">&lt;td&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;tb&gt;</span>',
+                    '<span class="html-tag">&lt;tr&gt;</span>',
+                    '<span class="html-tag">&lt;th&gt;</span>'
+                ]
+            },
+            {
+                id: 26,
+                question: 'Koja oznaka se koristi za naglašeni kursiv (italic) tekst?',
+                correct: '<span class="html-tag">&lt;em&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;strong&gt;</span>',
+                    '<span class="html-tag">&lt;u&gt;</span>',
+                    '<span class="html-tag">&lt;sup&gt;</span>'
+                ]
+            },
+            {
+                id: 27,
+                question: 'Koja oznaka predstavlja red u HTML tabeli?',
+                correct: '<span class="html-tag">&lt;tr&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;td&gt;</span>',
+                    '<span class="html-tag">&lt;row&gt;</span>',
+                    '<span class="html-tag">&lt;table-row&gt;</span>'
+                ]
+            },
+            {
+                id: 28,
+                question: 'Koji tag se koristi za jednolinijski unos teksta u formi?',
+                correct: '<span class="html-tag">&lt;input type="text"&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;textarea type="text"&gt;</span>',
+                    '<span class="html-tag">&lt;textbox&gt;</span>',
+                    '<span class="html-tag">&lt;field&gt;</span>'
+                ]
+            },
+            {
+                id: 29,
+                question: 'Kojom oznakom se pravi numerisana lista u HTML-u?',
+                correct: '<span class="html-tag">&lt;ol&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;nl&gt;</span>',
+                    '<span class="html-tag">&lt;ul&gt;</span>',
+                    '<span class="html-tag">&lt;list&gt;</span>'
+                ]
+            },
+            {
+                id: 30,
+                question: 'Koji atribut određuje URL adresu ka kojoj vodi hiperlink?',
+                correct: '<span class="html-tag">href</span>',
+                distractors: [
+                    '<span class="html-tag">src</span>',
+                    '<span class="html-tag">type</span>',
+                    '<span class="html-tag">url</span>'
+                ]
+            },
+            {
+                id: 31,
+                question: 'Koja oznaka predstavlja padajuću listu u HTML formi?',
+                correct: '<span class="html-tag">&lt;select&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;datalist&gt;</span>',
+                    '<span class="html-tag">&lt;dropdown&gt;</span>',
+                    '<span class="html-tag">&lt;optionlist&gt;</span>'
+                ]
+            },
+            {
+                id: 32,
+                question: 'Koja oznaka predstavlja zaglavlje ćelije u tabeli?',
+                correct: '<span class="html-tag">&lt;th&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;head&gt;</span>',
+                    '<span class="html-tag">&lt;thead&gt;</span>',
+                    '<span class="html-tag">&lt;td-header&gt;</span>'
+                ]
+            },
+            {
+                id: 33,
+                question: 'Koji od ponuđenih tagova NE postoji u HTML jeziku?',
+                correct: '<span class="html-tag">&lt;bold&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;small&gt;</span>',
+                    '<span class="html-tag">&lt;big&gt;</span>',
+                    '<span class="html-tag">&lt;mark&gt;</span>'
+                ]
+            },
+            {
+                id: 34,
+                question: 'Šta predstavlja <span class="html-tag">&lt;form&gt;</span> oznaka u HTML-u?',
+                correct: 'Obeležava sekciju za unos podataka',
+                distractors: [
+                    'Obeležava tabelu sa redovima i kolonama u dokumentu',
+                    'Prikazuje numerisanu listu stavki na web stranici',
+                    'Obeležava spoljašnji hiperlink ka drugoj web lokaciji'
+                ]
+            },
+            {
+                id: 35,
+                question: 'Koji atribut omogućava biranje samo jedne opcije iz grupe radio dugmića?',
+                correct: '<span class="html-tag">name</span>',
+                distractors: [
+                    '<span class="html-tag">group</span>',
+                    '<span class="html-tag">type</span>',
+                    '<span class="html-tag">value</span>'
+                ]
+            },
+            {
+                id: 36,
+                question: 'Kojom HTML oznakom se ubacuje slika na web stranicu?',
+                correct: '<span class="html-tag">&lt;img&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;pic&gt;</span>',
+                    '<span class="html-tag">&lt;image&gt;</span>',
+                    '<span class="html-tag">&lt;src&gt;</span>'
+                ]
+            },
+            {
+                id: 37,
+                question: 'Koji atribut određuje putanju (izvor) slike u <span class="html-tag">&lt;img&gt;</span> tagu?',
+                correct: '<span class="html-tag">src</span>',
+                distractors: [
+                    '<span class="html-tag">path</span>',
+                    '<span class="html-tag">href</span>',
+                    '<span class="html-tag">url</span>'
+                ]
+            },
+            {
+                id: 38,
+                question: 'Koji element predstavlja polje za višelinijski unos teksta?',
+                correct: '<span class="html-tag">&lt;textarea&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;textbox&gt;</span>',
+                    '<span class="html-tag">&lt;input type="text"&gt;</span>',
+                    '<span class="html-tag">&lt;multitext&gt;</span>'
+                ]
+            },
+            {
+                id: 39,
+                question: 'Koja oznaka obeležava pojedinačnu stavku liste?',
+                correct: '<span class="html-tag">&lt;li&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;item&gt;</span>',
+                    '<span class="html-tag">&lt;ul&gt;</span>',
+                    '<span class="html-tag">&lt;ol&gt;</span>'
+                ]
+            },
+            {
+                id: 40,
+                question: 'Šta znači tag <span class="html-tag">&lt;br&gt;</span> u HTML-u?',
+                correct: 'Novi red',
+                distractors: [
+                    'Novi paragraf teksta',
+                    'Ubacivanje slike na stranu',
+                    'Početak nove HTML tabele'
+                ]
+            },
+            {
+                id: 41,
+                question: 'Koja oznaka služi za definisanje naslova tabele?',
+                correct: '<span class="html-tag">&lt;caption&gt;</span>',
+                distractors: [
+                    '<span class="html-tag">&lt;title&gt;</span>',
+                    '<span class="html-tag">&lt;head&gt;</span>',
+                    '<span class="html-tag">&lt;note&gt;</span>'
+                ]
+            }
+        ];
+
+        // Konstante testa
+        const TOTAL_QUESTIONS = 15;
+        const QUIZ_DURATION_SECONDS = 9 * 60; // 9 minuta = 540 sekundi
+        const OPTION_LETTERS = ['a', 'b', 'c', 'd'];
+
+        // Stanje aplikacije
+        let activeQuestions = []; // Niz od 15 pripremljenih pitanja sa izmešanim opcijama
+        let userAnswers = {};     // Mapa: { questionIndex: selectedOptionIndex (0..3) }
+        let timeLeft = QUIZ_DURATION_SECONDS;
+        let timerInterval = null;
+        let isQuizFinished = false;
+        let currentFilter = 'all';
+
+        // DOM elementi
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const mainHeader = document.getElementById('main-header');
+        const quizStickyBar = document.getElementById('quiz-sticky-bar');
+
+        const timerBox = document.getElementById('timer-box');
+        const timerIcon = document.getElementById('timer-icon');
+        const timerDisplay = document.getElementById('timer-display');
+        const answeredCountEl = document.getElementById('answered-count');
+        const questionNavPills = document.getElementById('question-nav-pills');
+        const questionsContainer = document.getElementById('questions-container');
+
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModalText = document.getElementById('confirm-modal-text');
+
+        /**
+         * Fisher-Yates algoritam za nepristrasno nasumično mešanje niza
+         */
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        /**
+         * Formatira sekunde u MM:SS format
+         */
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        /**
+         * Priprema novi test:
+         * 1. Bira nasumično 15 od 41 pitanja
+         * 2. Za svako pitanje meša 4 opcije i pamti na kom slovu (a, b, c, d) se nalazi tačan odgovor
+         */
+        function prepareQuizData() {
+            const selectedRawQuestions = shuffleArray(QUESTION_BANK).slice(0, TOTAL_QUESTIONS);
+
+            activeQuestions = selectedRawQuestions.map((q, index) => {
+                // Kreiramo niz objekata opcija sa oznakom da li je opcija originalno tačna
+                const rawOptions = [
+                    { text: q.correct, isCorrect: true },
+                    ...q.distractors.map(d => ({ text: d, isCorrect: false }))
+                ];
+
+                // Mešamo opcije tako da tačan odgovor može biti na bilo kojoj poziciji (a, b, c ili d)
+                const shuffledOptions = shuffleArray(rawOptions).map((opt, optIdx) => ({
+                    letter: OPTION_LETTERS[optIdx],
+                    text: opt.text,
+                    isCorrect: opt.isCorrect
+                }));
+
+                // Pamtimo indeks i slovo tačnog odgovora za ovo pitanje
+                const correctIndex = shuffledOptions.findIndex(opt => opt.isCorrect);
+
+                return {
+                    index: index,
+                    id: q.id,
+                    question: q.question,
+                    options: shuffledOptions,
+                    correctIndex: correctIndex,
+                    correctLetter: OPTION_LETTERS[correctIndex]
+                };
+            });
+
+            userAnswers = {};
+            timeLeft = QUIZ_DURATION_SECONDS;
+            isQuizFinished = false;
+            currentFilter = 'all';
+        }
+
+        /**
+         * Pokreće tajmer od 09:00
+         */
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishQuiz(true); // Automatski završetak po isteku vremena
+                }
+            }, 1000);
+        }
+
+        /**
+         * Ažurira prikaz tajmera i menja stil kada ostane manje od 1 minut
+         */
+        function updateTimerUI() {
+            timerDisplay.textContent = formatTime(Math.max(0, timeLeft));
+
+            if (timeLeft <= 60) {
+                timerBox.classList.remove('bg-slate-100', 'border-slate-200');
+                timerBox.classList.add('bg-rose-50', 'border-rose-300', 'timer-urgent');
+                timerIcon.classList.remove('text-indigo-600');
+                timerIcon.classList.add('text-rose-600');
+                timerDisplay.classList.remove('text-slate-900');
+                timerDisplay.classList.add('text-rose-700');
+            } else {
+                timerBox.classList.add('bg-slate-100', 'border-slate-200');
+                timerBox.classList.remove('bg-rose-50', 'border-rose-300', 'timer-urgent');
+                timerIcon.classList.add('text-indigo-600');
+                timerIcon.classList.remove('text-rose-600');
+                timerDisplay.classList.add('text-slate-900');
+                timerDisplay.classList.remove('text-rose-700');
+            }
+        }
+
+        /**
+         * Renderuje navigacionu traku sa brojevima 1 - 15
+         */
+        function renderNavPills() {
+            questionNavPills.innerHTML = '';
+            activeQuestions.forEach((q, idx) => {
+                const isAnswered = userAnswers.hasOwnProperty(idx);
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.textContent = idx + 1;
+                pill.title = `Idi na pitanje ${idx + 1}`;
+                pill.className = `w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center justify-center ${
+                    isAnswered
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                }`;
+                pill.addEventListener('click', () => {
+                    const targetEl = document.getElementById(`question-card-${idx}`);
+                    if (targetEl) {
+                        const yOffset = -125; // Kompenzacija za sticky header
+                        const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                });
+                questionNavPills.appendChild(pill);
+            });
+        }
+
+        /**
+         * Renderuje svih 15 pitanja na ekranu za rad
+         */
+        function renderQuestions() {
+            questionsContainer.innerHTML = '';
+
+            activeQuestions.forEach((q, qIdx) => {
+                const card = document.createElement('article');
+                card.id = `question-card-${qIdx}`;
+                card.className = 'bg-white rounded-2xl p-5 sm:p-7 shadow-sm border border-slate-200 transition-all';
+
+                const optionsHTML = q.options.map((opt, optIdx) => {
+                    const isSelected = userAnswers[qIdx] === optIdx;
+                    return `
+                        <label data-q="${qIdx}" data-opt="${optIdx}" class="option-label group flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all select-none ${
+                            isSelected
+                                ? 'border-indigo-600 bg-indigo-50/60 shadow-xs'
+                                : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                        }">
+                            <input type="radio" name="question_${qIdx}" value="${optIdx}" class="sr-only" ${isSelected ? 'checked' : ''}>
+                            <span class="option-badge w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
+                                isSelected
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-slate-100 text-slate-700 group-hover:bg-indigo-100 group-hover:text-indigo-700'
+                            }">
+                                ${opt.letter})
+                            </span>
+                            <span class="text-sm sm:text-base text-slate-800 font-medium pt-1 leading-relaxed">
+                                ${opt.text}
+                            </span>
+                        </label>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3.5 mb-5">
+                        <span class="px-3 py-1 rounded-lg bg-indigo-100 text-indigo-700 font-extrabold text-sm shrink-0">
+                            ${qIdx + 1}.
+                        </span>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug pt-0.5">
+                            ${q.question}
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${optionsHTML}
+                    </div>
+                `;
+
+                questionsContainer.appendChild(card);
+            });
+
+            // Dodavanje event listener-a za odabir odgovora
+            document.querySelectorAll('.option-label').forEach(label => {
+                label.addEventListener('click', () => {
+                    if (isQuizFinished) return;
+                    const qIdx = parseInt(label.dataset.q, 10);
+                    const optIdx = parseInt(label.dataset.opt, 10);
+                    selectOption(qIdx, optIdx);
+                });
+            });
+
+            updateProgressUI();
+        }
+
+        /**
+         * Beleži izbor učenika i ažurira vizuelni stil kartice bez ponovnog renderovanja cele stranice
+         */
+        function selectOption(qIdx, optIdx) {
+            userAnswers[qIdx] = optIdx;
+
+            const card = document.getElementById(`question-card-${qIdx}`);
+            if (card) {
+                const labels = card.querySelectorAll('.option-label');
+                labels.forEach((lbl, idx) => {
+                    const badge = lbl.querySelector('.option-badge');
+                    const radio = lbl.querySelector('input[type="radio"]');
+                    if (idx === optIdx) {
+                        lbl.classList.remove('border-slate-200', 'hover:border-indigo-300', 'hover:bg-slate-50');
+                        lbl.classList.add('border-indigo-600', 'bg-indigo-50/60', 'shadow-xs');
+                        badge.classList.remove('bg-slate-100', 'text-slate-700', 'group-hover:bg-indigo-100', 'group-hover:text-indigo-700');
+                        badge.classList.add('bg-indigo-600', 'text-white');
+                        radio.checked = true;
+                    } else {
+                        lbl.classList.add('border-slate-200', 'hover:border-indigo-300', 'hover:bg-slate-50');
+                        lbl.classList.remove('border-indigo-600', 'bg-indigo-50/60', 'shadow-xs');
+                        badge.classList.add('bg-slate-100', 'text-slate-700', 'group-hover:bg-indigo-100', 'group-hover:text-indigo-700');
+                        badge.classList.remove('bg-indigo-600', 'text-white');
+                        radio.checked = false;
+                    }
+                });
+            }
+
+            updateProgressUI();
+        }
+
+        /**
+         * Ažurira brojač odgovorenih pitanja i boju navigacionih dugmića
+         */
+        function updateProgressUI() {
+            const answeredCount = Object.keys(userAnswers).length;
+            answeredCountEl.textContent = answeredCount;
+            renderNavPills();
+        }
+
+        /**
+         * Pokreće test sa početnog ekrana ili resetuje novi test
+         */
+        function startQuiz() {
+            prepareQuizData();
+
+            startScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            mainHeader.classList.add('hidden');
+
+            quizStickyBar.classList.remove('hidden');
+            quizScreen.classList.remove('hidden');
+
+            renderQuestions();
+            startTimer();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Proverava da li su sva pitanja odgovorena pre završetka
+         */
+        function handleFinishAttempt() {
+            const answeredCount = Object.keys(userAnswers).length;
+            const unansweredCount = TOTAL_QUESTIONS - answeredCount;
+
+            if (unansweredCount > 0) {
+                const word = unansweredCount === 1 ? 'pitanje' : (unansweredCount < 5 ? 'pitanja' : 'pitanja');
+                confirmModalText.innerHTML = `Niste odgovorili na <strong>${unansweredCount} ${word}</strong>. Neodgovorena pitanja se računaju kao greška. Da li ste sigurni da želite da završite test?`;
+                confirmModal.classList.remove('hidden');
+            } else {
+                finishQuiz(false);
+            }
+        }
+
+        /**
+         * Završava test, računa poene, procenat i prikazuje rezultate sa zadržanim tačnim odgovorima i greškama
+         */
+        function finishQuiz(isTimeExpired = false) {
+            if (isQuizFinished) return;
+            isQuizFinished = true;
+            clearInterval(timerInterval);
+            confirmModal.classList.add('hidden');
+
+            // Sakrij ekran za rad i prikaži ekran sa rezultatima
+            quizStickyBar.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            mainHeader.classList.remove('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            // Podaci o učeniku i vremenu
+            const studentName = document.getElementById('student-name').value.trim() || 'Učenik';
+            const studentClass = document.getElementById('student-class').value.trim();
+            const spentSeconds = QUIZ_DURATION_SECONDS - Math.max(0, timeLeft);
+            const studentLabel = studentClass ? `${studentName} (${studentClass})` : studentName;
+            document.getElementById('student-info-display').textContent = `${studentLabel} • Utrošeno vreme: ${formatTime(spentSeconds)}`;
+
+            const timeExpiredBadge = document.getElementById('time-expired-badge');
+            if (isTimeExpired) {
+                timeExpiredBadge.classList.remove('hidden');
+            } else {
+                timeExpiredBadge.classList.add('hidden');
+            }
+
+            // Bodovanje: poređenje odabranog indeksa/slova sa zapamćenim tačnim odgovorom
+            let correctCount = 0;
+            let unansweredCount = 0;
+
+            activeQuestions.forEach((q, idx) => {
+                const selectedOptIdx = userAnswers[idx];
+                if (selectedOptIdx === undefined) {
+                    unansweredCount++;
+                } else if (selectedOptIdx === q.correctIndex) {
+                    correctCount++;
+                }
+            });
+
+            const wrongCount = TOTAL_QUESTIONS - correctCount;
+            const percentage = Number(((correctCount / TOTAL_QUESTIONS) * 100).toFixed(1));
+
+            // Popunjavanje statističkih kartica
+            document.getElementById('res-correct-count').textContent = correctCount;
+            document.getElementById('res-percentage').textContent = `${percentage}%`;
+            document.getElementById('res-wrong-count').textContent = wrongCount;
+            document.getElementById('res-unanswered-note').textContent = unansweredCount > 0 ? `(${unansweredCount} neodgovoreno)` : '';
+
+            // Predlog ocene na osnovu procenta uspešnosti
+            const gradeEl = document.getElementById('res-grade');
+            const gradeDescEl = document.getElementById('res-grade-desc');
+            const progressBar = document.getElementById('res-progress-bar');
+
+            if (percentage >= 80) {
+                gradeEl.textContent = 'Vrlo dobar (4)';
+                gradeEl.className = 'text-xl sm:text-2xl font-extrabold text-emerald-700 block leading-tight';
+                gradeDescEl.textContent = 'Izvanredno poznavanje gradiva!';
+                progressBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-700';
+            } 
+            /* else if (percentage >= 70) {
+                gradeEl.textContent = 'Dobar (3)';
+                gradeEl.className = 'text-xl sm:text-2xl font-extrabold text-indigo-700 block leading-tight';
+                gradeDescEl.textContent = 'Veoma dobar rezultat.';
+                progressBar.className = 'h-full bg-indigo-600 rounded-full transition-all duration-700';
+            }*/ 
+                else if (percentage >= 65) {
+                gradeEl.textContent = 'Dobar (3)';
+                gradeEl.className = 'text-xl sm:text-2xl font-extrabold text-blue-700 block leading-tight';
+                gradeDescEl.textContent = 'Solidno znanje, obratite pažnju na greške.';
+                progressBar.className = 'h-full bg-blue-500 rounded-full transition-all duration-700';
+            } else if (percentage >= 50) {
+                gradeEl.textContent = 'Dovoljan (2)';
+                gradeEl.className = 'text-xl sm:text-2xl font-extrabold text-amber-700 block leading-tight';
+                gradeDescEl.textContent = 'Potrebno je dodatno ponavljanje.';
+                progressBar.className = 'h-full bg-amber-500 rounded-full transition-all duration-700';
+            } else {
+                gradeEl.textContent = 'Nedovoljan (1)';
+                gradeEl.className = 'text-xl sm:text-2xl font-extrabold text-rose-700 block leading-tight';
+                gradeDescEl.textContent = 'Ponovite lekcije i pokušajte ponovo.';
+                progressBar.className = 'h-full bg-rose-500 rounded-full transition-all duration-700';
+            }
+
+            document.getElementById('res-progress-label').textContent = `${percentage}% (${correctCount} od ${TOTAL_QUESTIONS})`;
+            setTimeout(() => {
+                progressBar.style.width = `${percentage}%`;
+            }, 50);
+
+            // Brojači za filtere
+            document.getElementById('count-all').textContent = TOTAL_QUESTIONS;
+            document.getElementById('count-wrong').textContent = wrongCount;
+            document.getElementById('count-correct').textContent = correctCount;
+
+            // Podrazumevano prikazujemo sva pitanja (zadržani tačni odgovori + greške)
+            setFilter('all');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Postavlja aktivan filter na ekranu rezultata ('all', 'wrong', 'correct')
+         */
+        function setFilter(filterType) {
+            currentFilter = filterType;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filterType) {
+                    btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer';
+                } else {
+                    btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all cursor-pointer';
+                }
+            });
+
+            renderReviewList();
+        }
+
+        /**
+         * Renderuje detaljan pregled pitanja po završetku testa:
+         * - Zadržava sve tačne odgovore (jasno obeleženo slovo i tekst tačnog odgovora)
+         * - Prikazuje greške sa poređenjem: Vaš odgovor vs. Tačan odgovor
+         */
+        function renderReviewList() {
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = '';
+
+            let displayedItems = 0;
+
+            activeQuestions.forEach((q, idx) => {
+                const selectedOptIdx = userAnswers[idx];
+                const isUnanswered = selectedOptIdx === undefined;
+                const isCorrect = !isUnanswered && selectedOptIdx === q.correctIndex;
+
+                // Filtriranje prikaza
+                if (currentFilter === 'wrong' && isCorrect) return;
+                if (currentFilter === 'correct' && !isCorrect) return;
+
+                displayedItems++;
+
+                const correctOption = q.options[q.correctIndex];
+                const selectedOption = !isUnanswered ? q.options[selectedOptIdx] : null;
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl p-5 sm:p-6 border-l-4 shadow-sm border border-slate-200 ${
+                    isCorrect ? 'border-l-emerald-500' : 'border-l-rose-500'
+                }`;
+
+                // Status bedž
+                const statusBadge = isCorrect
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                           Tačan odgovor (+1 poen)
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                           ${isUnanswered ? 'Nije odgovoreno (0 poena)' : 'Greška (0 poena)'}
+                       </span>`;
+
+                // Prikaz odgovora:
+                // Ako je tačno -> zadržavamo i prikazujemo tačan odgovor u zelenom okviru + sve ponuđene opcije radi učenja
+                // Ako je greška -> jasno izdvajamo "Vaš odabrani odgovor" i "Tačan odgovor"
+                let answersDetailHTML = '';
+
+                if (isCorrect) {
+                    answersDetailHTML = `
+                        <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-start gap-3">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                ${correctOption.letter})
+                            </span>
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 block">Vaš odgovor je tačan:</span>
+                                <span class="text-sm sm:text-base font-semibold text-slate-900">${correctOption.text}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const userChoiceHTML = isUnanswered
+                        ? `<div class="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 flex items-start gap-3">
+                               <span class="w-7 h-7 rounded-lg bg-rose-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">!</span>
+                               <div>
+                                   <span class="text-xs font-bold uppercase tracking-wider text-rose-700 block">Vaš izbor:</span>
+                                   <span class="text-sm sm:text-base font-semibold text-rose-900 italic">Niste izabrali nijedan odgovor</span>
+                               </div>
+                           </div>`
+                        : `<div class="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 flex items-start gap-3">
+                               <span class="w-7 h-7 rounded-lg bg-rose-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                   ${selectedOption.letter})
+                               </span>
+                               <div>
+                                   <span class="text-xs font-bold uppercase tracking-wider text-rose-700 block">Vaš odabrani odgovor:</span>
+                                   <span class="text-sm sm:text-base font-semibold text-rose-950">${selectedOption.text}</span>
+                               </div>
+                           </div>`;
+
+                    const correctChoiceHTML = `
+                        <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-start gap-3">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                ${correctOption.letter})
+                            </span>
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 block">Tačan odgovor:</span>
+                                <span class="text-sm sm:text-base font-semibold text-emerald-950">${correctOption.text}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    answersDetailHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${userChoiceHTML}
+                            ${correctChoiceHTML}
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Pitanje ${idx + 1} od ${TOTAL_QUESTIONS}</span>
+                        ${statusBadge}
+                    </div>
+                    <h4 class="text-base sm:text-lg font-bold text-slate-900 mb-4 leading-snug">
+                        ${q.question}
+                    </h4>
+                    ${answersDetailHTML}
+                `;
+
+                reviewContainer.appendChild(card);
+            });
+
+            // Poruka ako nema stavki u izabranom filteru (npr. 0 grešaka!)
+            if (displayedItems === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'bg-white rounded-2xl p-8 text-center border border-slate-200';
+                emptyMsg.innerHTML = currentFilter === 'wrong'
+                    ? `<p class="text-lg font-bold text-emerald-700 mb-1">Čestitamo! Nemate nijednu grešku na testu!</p>
+                       <p class="text-sm text-slate-500">Svi vaši odgovori su tačni.</p>`
+                    : `<p class="text-lg font-bold text-slate-700 mb-1">Nema tačnih odgovora za prikaz.</p>
+                       <p class="text-sm text-slate-500">Kliknite na "Samo greške" ili "Sva pitanja" da vidite tačna rešenja.</p>`;
+                reviewContainer.appendChild(emptyMsg);
+            }
+        }
+
+        // =====================================================================
+        // POVEZIVANJE DOGAĐAJA (Event Listeners)
+        // =====================================================================
+        document.getElementById('btn-start-quiz').addEventListener('click', startQuiz);
+        document.getElementById('btn-finish-quiz').addEventListener('click', handleFinishAttempt);
+        document.getElementById('btn-finish-quiz-bottom').addEventListener('click', handleFinishAttempt);
+        document.getElementById('btn-restart-quiz').addEventListener('click', startQuiz);
+
+        // Modal kontrole
+        document.getElementById('btn-modal-cancel').addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+        });
+        document.getElementById('btn-modal-confirm').addEventListener('click', () => {
+            finishQuiz(false);
+        });
+
+        // Filter dugmad na ekranu rezultata
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setFilter(btn.dataset.filter);
+            });
+        });
+    </script>
+</body>
+</html>
